@@ -5,6 +5,7 @@ const connectToDB = require('./config/db');
 const bodyParser = require('body-parser');
 const wishlistRoute = require('./routes/wishlist');
 const wishlistItemRoute = require('./routes/wishlistItem');
+const notificationRoute = require('./routes/notification');
 const cors = require('cors');
 
 const app = express();
@@ -17,6 +18,7 @@ app.use(bodyParser.json());
 app.use('/api/v1/auth', authRoute);
 app.use('/api/v1/wishlist', wishlistRoute);
 app.use('/api/v1/wishlist-item', wishlistItemRoute);
+app.use('/api/v1/notification', notificationRoute);
 
 // Test route
 app.get('/', (req, res) => {
