@@ -1,4 +1,5 @@
 const Wishlist = require('../models/wishlist');
+const Notification = require('../models/notification');
 
 // create a new wishlist
 exports.createWishlist = async (req, res) => {
@@ -45,3 +46,40 @@ exports.deleteWishlist = async (req, res) => {
         })
     }
 }
+
+// share wishlist
+exports.shareWishlist = async (req, res) => {
+    try {
+        const { wishlistId } = req.body;
+        const userId = req.user.id;
+        const wishlist = await Wishlist.findById(wishlistId);
+        if (!wishlist) {
+            return res.status(404).json({
+                message: "Wishlist not found"
+            });
+        }
+        if (wishlist.userId.toString() !== req.user.id) {
+            return res.status(401).json({
+                message: "You are not authorized to share this wishlist"
+            });
+        }
+        if (!wishlist.sharedWith.includes(userId)) {
+            wishlist.sharedWith.push(userId);
+        }
+        await wishlist.save();
+        
+        // Create a notification
+        const notification = new Notification({
+            user: userId,
+            message: `Wishlist ${wishlist.name} shared with you`
+        });
+        await notification.save();
+        res.status(200).json({
+            message: "Wishlist shared"
+        });
+    } catch (error) {
+        res.status(500).json({
+            error: error.message
+        });
+    }
+;}
