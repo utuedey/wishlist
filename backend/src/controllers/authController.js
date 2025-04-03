@@ -5,17 +5,17 @@ const { body, validationResult } = require("express-validator");
 const User = require("../models/User");
 
 // Signup Route
-
 exports.Signup = async (req, res) => {
-  [
-    body("name").notEmpty().withMessage("Name is required"),
-    body("email").isEmail().withMessage("Invalid email"),
-    body("password").isLength({ min: 6 }).withMessage("Password must be at least 6 characters"),
-  ],
-  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+  await Promise.all([
+    body("name").notEmpty().withMessage("Name is required").run(req),
+    body("email").isEmail().withMessage("Invalid email").run(req),
+    body("password").isLength({ min: 6 }).withMessage("Password must be at least 6 characters").run(req),
+  ]);
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
 
+  }
     const { name, email, password } = req.body;
     try {
       const existingUser = await User.findOne({ email });
@@ -30,16 +30,14 @@ exports.Signup = async (req, res) => {
     } catch (error) {
       res.status(500).json({ error: "Server error" });
     }
-  }
-};
+  };
 
 // Login Route
 exports.Login = async (req, res) => {
-  [
-    body("email").isEmail().withMessage("Invalid email"),
-    body("password").notEmpty().withMessage("Password is required"),
-  ],
-  async (req, res) => {
+  await Promise.all([
+    body("email").isEmail().withMessage("Invalid email").run(req),
+    body("password").notEmpty().withMessage("Password is required").run(req),
+  ]);
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
@@ -55,30 +53,39 @@ exports.Login = async (req, res) => {
         expiresIn: process.env.JWT_EXPIRES_IN,
       });
 
-      res.json({ message: "Login successful", token });
+      res.json({ message: "Login successful", user, token });
     } catch (error) {
       res.status(500).json({ error: "Server error" });
     }
-  }
-};
+  };
 
 // Verify Token Endpoint
-exports.verifyToken = async (req,res) => {
-    try {
-        const token = req.header('Authorization');
-        if (!token) {
-            return res.status(401).json({ message: 'Unauthorized' });
-        }
+exports.verifyToken = async (req, res) => {
 
-        jwt.verify(token, JWT_SECRET_KEY, (error, user) => {
-            if (error) {
-                return res.status(401).json({ message: 'Unauthorized' });
-            }
-
-            res.status(200).json({ message: 'Token verified', user });
+    // const authHeader = req.headers.authorization;
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith("Bearer ")){
+        return res.status(401).json({
+            message: "Authorization header missing"
         });
+    }
+    const token = authHeader.split(" ")[1];
+    if (!token) {
+        return res.status(403).json({
+            message: "Token is missing"
+        });
+    }
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+        req.user = decoded;
+        res.status(200).json({
+          message: "User verified successfully",
+          user: req.user
+        })
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server error' });
+        return res.status(401).json({
+            message: "Invalid token"
+        });
     }
 };
