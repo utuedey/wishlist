@@ -4,31 +4,36 @@ const winston = require('winston');
 const { format, transports } = winston;
 
 const logger = winston.createLogger({
-    level: 'info',
-    format: format.combine(
-		format.timestamp({
-			format: 'YYYY-MM-DD HH:mm:ss'
-		}),
-		format.errors({ stack: true }),
-		format.splat(),
+  level: process.env.LOG_LEVEL || 'info',
+  format: format.combine(
+	format.timestamp(),
+	format.json()
+  ),
+  transports: [
+	new transports.File({
+	  filename: 'error.log',
+	  level: 'error',
+	  format: format.combine(
+		format.timestamp(),
 		format.json()
-	),
-	defaultMeta: { service: 'wishlist'},
-	transports: [
-
-	//write to all logs with level info and below to quick-start-combined.log
-	//write all logs error (and below) to quick-start-error.log
-	new transports.File({ filename: 'quick-start-error.log', level: 'error'}),
-	new transports.File({ filename: 'quick-start-combined.log'})
-]
+	  )
+	}),
+	new transports.File({
+	  filename: 'combined.log',
+	  format: format.combine(
+		format.timestamp(),
+		format.json()
+	  )
+	})
+  ]
 });
+if (process.env.NODE_ENV !== 'production') {
+  logger.add(new transports.Console({
+	format: format.combine(
+	  format.colorize(),
+	  format.simple()
+	)
+  }));
+}
 
-//If we're not in production them log to the console
-	if (process.env.NODE_ENV != 'production'){
-	    logger.add(new transports.Console({
-		format: format.combine(
-		    format.colorize(),
-		    format.simple()
-)
-}))
-};
+module.exports = logger;

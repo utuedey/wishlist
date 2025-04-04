@@ -7,6 +7,8 @@ const wishlistRoute = require('./routes/wishlist');
 const wishlistItemRoute = require('./routes/wishlistItem');
 const notificationRoute = require('./routes/notification');
 const cors = require('cors');
+const logger = require('./logger/logger');
+const uploadRoutes = require('./routes/uploads');
 
 const app = express();
 
@@ -20,6 +22,7 @@ app.use('/api/v1/auth', authRoute);
 app.use('/api/v1/wishlist', wishlistRoute);
 app.use('/api/v1/wishlist-item', wishlistItemRoute);
 app.use('/api/v1/notification', notificationRoute);
+app.use('/api/v1/upload', uploadRoutes);
 
 // Test route
 app.get('/', (req, res) => {
@@ -30,10 +33,10 @@ const PORT = process.env.PORT || 3060
 
 connectToDB().then(() => {
     app.listen(PORT, () => {
-        console.log(`Server is listening on localhost:${PORT}`)
+        logger.info(`Server is listening on localhost:${PORT}`);
     });
 }).catch((error) => {
-    console.log("Database connection failed!", error)
+    logger.error("Database connection failed!", error);
 });
 
 module.exports = app;
