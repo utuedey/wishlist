@@ -20,7 +20,6 @@ app.use(express.json());
 // API ROUTES
 app.use('/api/v1/auth', authRoute);
 app.use('/api/v1/wishlist', wishlistRoute);
-app.use('/api/v1/wishlist-item', wishlistItemRoute);
 app.use('/api/v1/notification', notificationRoute);
 app.use('/api/v1/upload', uploadRoutes);
 
