@@ -63,12 +63,12 @@ exports.Login = async (req, res) => {
         return res.status(401).json({ error: "Invalid credentials" });
       }
       // Generate JWT token
-      const token = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET_KEY, {
+      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET_KEY, {
         expiresIn: process.env.JWT_EXPIRES_IN,
       });
 
       logger.info("User login successful");
-      res.json({ message: "Login successful", user, token });
+      res.json({ message: "Login successful", user: { id: user._id, name: user.name, email: user.email }, token });
     } catch (error) {
       logger.error("Login: Failed to login user!", error)
       res.status(500).json({ error: "Server error" });
